@@ -1,0 +1,19 @@
+- fix Helper.importModule() for hirachical module loading
+- change createEvent by default to False and lets do it at
+  writeMessageToNetwork() ?!
+- maybe 302 can be used for "endless" testing of INVITES for some
+  criterias without redialing (after checking that 302 works)
+- use the Python Config Class?
+- use the Python Logging Class?
+
++ ignore messages which are not related (Call-ID) to the current running
+  test cases (store Call-IDs and drop other replies?! (requests can be 
+  processed but replies without dialog are problematic)
+  - fix: if thus unrelated replies are dropped and not stored somewhere
+    the next try to send a message ends with "bad filedescriptor" for any
+	calls to the socket?!
+	(presumably because the socket is closed because the socket object is
+	 not referenced any more)
++ TCP support
+  - fix: adding late data, e.g. body
+  - fix: missing content-length = return nothing but wait for additional data

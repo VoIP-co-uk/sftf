@@ -1,0 +1,356 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML
+><HEAD
+><TITLE
+>SIP Forum Basic UA Test Suite User Guide
+  </TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+><BODY
+CLASS="ARTICLE"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="ARTICLE"
+><DIV
+CLASS="TITLEPAGE"
+><H1
+CLASS="TITLE"
+><A
+NAME="AEN2"
+></A
+>SIP Forum Basic UA Test Suite User Guide</H1
+><H3
+CLASS="AUTHOR"
+><A
+NAME="AEN5"
+>Nils Ohlmeier</A
+></H3
+><DIV
+><DIV
+CLASS="ABSTRACT"
+><A
+NAME="AEN8"
+></A
+><P
+></P
+><P
+>This user guide gives you a short overview on how to use the SIP Forum Testing Framework to run the SIP Forum Basic UA Test Suite.
+  </P
+><P
+></P
+></DIV
+></DIV
+><HR></DIV
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>1. <A
+HREF="#AEN10"
+>Short Overview</A
+></DT
+><DT
+>2. <A
+HREF="#AEN14"
+>Requirements</A
+></DT
+><DD
+><DL
+><DT
+>.1. <A
+HREF="#AEN20"
+>Requirements list:</A
+></DT
+></DL
+></DD
+><DT
+>3. <A
+HREF="#AEN31"
+>Testing Framework Invocation</A
+></DT
+><DT
+>4. <A
+HREF="#AEN45"
+>Configuration<A
+NAME="SEC:CONFIG-FILE"
+></A
+></A
+></DT
+><DT
+>5. <A
+HREF="#AEN99"
+>Bug Reports</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="SECT1"
+><H2
+CLASS="SECT1"
+><A
+NAME="AEN10"
+></A
+>1. Short Overview</H2
+><P
+>Generally the SIP Forum Basic UA Test Suite is separated into two parts. The first part is the SIP Forum Testing Framework which contains all the logic which is required to run the test, parse the incoming messages and e.g. create replies. The second part is the a subdirectory which contains the Basic UA Tests itself.
+  </P
+><P
+>After starting the SIP Forum Testing Framework it will first load the desired tests from the subdirectory. When the tests are successfully loaded the tests will be executed one after another, until all tests are finished. At the end when all tests are done a result overview over all tests will be printed out.
+  </P
+></DIV
+><DIV
+CLASS="SECT1"
+><HR><H2
+CLASS="SECT1"
+><A
+NAME="AEN14"
+></A
+>2. Requirements</H2
+><P
+>As the testing framework and the test cases are written in Python (<A
+HREF="http://www.python.org"
+TARGET="_top"
+>Python Homepage</A
+>) a working Python installation on the system is required. The software is developed under Linux with Python 2.3. It is also know to work under Windows XP. Python below 2.3 was never tested but may work too. Please report any experiences with other operating systems or Python versions.
+  </P
+><P
+>As the test cases 702 and 703 test for working DNS SRV support they require the installation of the dnspython library (<A
+HREF="http://www.dnspython.org"
+TARGET="_top"
+>DNS Python Homepage</A
+>) to check the DNS SRV setup.
+  </P
+><DIV
+CLASS="SECT4"
+><HR><H5
+CLASS="SECT4"
+><A
+NAME="AEN20"
+></A
+>.1. Requirements list:</H5
+><P
+></P
+><UL
+><LI
+><P
+>supported operating systems (known to work): Linux, Windows XP
+      </P
+></LI
+><LI
+><P
+>working Python 2.3 installation
+      </P
+></LI
+><LI
+><P
+>DNS Python library installation (for test cases 702 and 702; details see below)
+      </P
+></LI
+></UL
+><P
+>The tests 702 and 703 require a DNS SRV setup which contains two SRV entries with different priorities which are pointing at two different ports on the host which runs the testing framework. Example:
+     </P
+><PRE
+CLASS="PROGRAMLISTING"
+>_sip._udp SRV 0 0 5060 testhost.example.com.
+          SRV 1 0 5061 testhost.example.com.
+     </PRE
+></DIV
+></DIV
+><DIV
+CLASS="SECT1"
+><HR><H2
+CLASS="SECT1"
+><A
+NAME="AEN31"
+></A
+>3. Testing Framework Invocation</H2
+><P
+>Invoke the SIP Forum Testing Framework by executing the SFTF script directly (Note: this requires a python interpreter installed at /usr/bin/python) or by calling your python interpreter with the SFTF script as parameter. If you called the SFTF script without a parameter it will print out a help screen like this:
+  </P
+><PRE
+CLASS="PROGRAMLISTING"
+>SIP Forum Test Framework v0.9.1 by Nils Ohlmeier
+  Copyright (C) 2004 Sip Forum
+SFTF.py [-acdChiIrRsSV] [-D directory] [-t testcasename] [testcasename]
+  -a                run all tests
+  -c                run UAC tests only
+  -C                dont use colors on output
+  -d                dont exit on keyboard interrupt
+  -D                add the dir to file search path
+  -h                print this help screen
+  -i                run non-interactive tests only
+  -I                run interactive tests only
+  -r                run tests without REGISTER only
+  -R                run tests with REGISTER only
+  -s                run UAS tests only
+  -S                turn off verbose test summary
+  -t testcasename   load and run testcasename
+                    (can be given multiple times)
+  -V                print the version information
+  </PRE
+><P
+>You can run a single test by calling e.g.
+  </P
+><PRE
+CLASS="PROGRAMLISTING"
+>SFTF.py -t case201
+  </PRE
+><P
+>This will try to load the test &ldquo;case201&rdquo; from the test directory (see ) and run it if loading was successfull. You can give as many -t parameters as you want (limited by the command line length of the operating system). E.g.
+  </P
+><PRE
+CLASS="PROGRAMLISTING"
+>SFTF.py -t case201 -t case202
+  </PRE
+><P
+>will first load the test case 201 and 202 and then run both test cases.
+  </P
+><P
+>The easiest way to prevent giving all test cases you want to run by hand is to use combinations of the parameters c, i, I, r, R and s. For example calling the following command:
+  </P
+><PRE
+CLASS="PROGRAMLISTING"
+>SFTF.py -i -r
+  </PRE
+><P
+>will load and run all test cases which do not require any interaction by a person at the user agent (Note: this will be a subset of the UAC tests, UAC tests generally require interaction by the user) and omit all test cases which require to send a REGISTER to the testing framework.
+  </P
+><P
+>Generally it is not recommended to run all test (with the -a parameter), because in this case all test will be loaded without any order and you will have to start calls, send REGISTER's and accept calls without any order. So it is recommended to run e.g. first all test which require to send a REGISTER, then all non-interactive tests, and finally all interactive tests (so you can use the hopefully existant redial button at the UA more effectively ;-).
+  </P
+></DIV
+><DIV
+CLASS="SECT1"
+><HR><H2
+CLASS="SECT1"
+><A
+NAME="AEN45"
+></A
+>4. Configuration<A
+NAME="SEC:CONFIG-FILE"
+></A
+></H2
+><P
+>The most IMPORTANT part is the configuration of the user agent which should be tested. Please configure the host and port where the testing framework runs as outgoing proxy and registrar. Do NOT put a proxy between the user agent and the testing framework. This is necessary because several tests of the Basic UA Test Suite require to fake a proxy in front of the user agent. And a proxy between the UA and the testing framework can change the result of the test cases very much.
+  </P
+><P
+>The other important part to configure the SIP Forum testing framework is the file Config.py. Generally all parameters in the config file should be commented so we will give here only a brief overview about the most important variables.
+  </P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>LOCAL_HOSTNAME</DT
+><DD
+><P
+>the full qualified domain name of the host will be detected at framework startup. If this lookup fails (e.g. because of multiple interace at thost) you would have to replace the empty string &ldquo;&rdquo; with the full qualified domain name.
+   </P
+></DD
+><DT
+>LOCAL_IP</DT
+><DD
+><P
+>as the fqdn of the host the IP will also be detected at testing framework startup. If this lookup fails you will have to specify the IP by hand.
+   </P
+></DD
+><DT
+>LOCAL_PORT</DT
+><DD
+><P
+>the port which the testing framework listens on, and from which it sends request.
+   </P
+></DD
+><DT
+>TEST_HOST</DT
+><DD
+><P
+>the IP or hostname of the target device (the user agent) which should be tested.
+   </P
+></DD
+><DT
+>TEST_HOST_PORT</DT
+><DD
+><P
+>the port on which the target device listens.
+   </P
+></DD
+><DT
+>TEST_USER_NAME</DT
+><DD
+><P
+>the user name which will be used for authentication checks.
+   </P
+></DD
+><DT
+>TEST_USER_PASSWORD</DT
+><DD
+><P
+>the password which will be used during authentication.
+   </P
+></DD
+><DT
+>TEST_CASE_PATH</DT
+><DD
+><P
+>the path of the directory which contains the test cases
+   </P
+></DD
+><DT
+>LOG_LEVEL</DT
+><DD
+><P
+>this value from 0 to 5 defines which debug messages should be written to the log file. 0 will log nothing, 5 will be very verbosive.
+   </P
+></DD
+><DT
+>LOG_DEBUG_STD_OUT</DT
+><DD
+><P
+>True or False. Should all debug messages also be printed to standard out (your console). You can safely set this to False, because the messages are all written to the debug file way anyway.
+   </P
+></DD
+><DT
+>LOG_NETWORK_PACKETS</DT
+><DD
+><P
+>True or False. Should all received and sent message be logged to the debug log file as well? It eases debugging a lot, if you can see what message caused the following debug messages in the log file.
+   </P
+></DD
+><DT
+>LOG_TESTS_STD_OUT</DT
+><DD
+><P
+>True or False. Should the message from the test log file also be printed on standard out (your console)? You can safely set this to True, it will only print out only very few informative message during each test case run.
+   </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT1"
+><HR><H2
+CLASS="SECT1"
+><A
+NAME="AEN99"
+></A
+>5. Bug Reports</H2
+><P
+>If the testing framework ever fails during execution of a test it will print out a traceback an a message to report this bug. In this case please send the debug log file (debug.log by default) to develop at ohlmeier.org. Preferably set the log level (LOG_LEVEL) in Config.py to 5 and especially please turn on network logging by setting LOG_NETWORKS_PACKETS to True (and set LOG_NETWORKS_PACKETS_LEVEL to the value of LOG_LEVEL or lower) and try to reproduce the failure. Then send the debug.log file to develop at ohlmeier.org. Tanks in advance for your support.
+  </P
+></DIV
+></DIV
+></BODY
+></HTML
+>

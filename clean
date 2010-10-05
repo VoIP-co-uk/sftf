@@ -1,0 +1,8 @@
+#! /bin/sh
+rm -f debug.log sftf.log
+rm -f *.pyc
+rm -f *.py~
+rm -f HFH/*.pyc
+rm -f BodyParser/*.pyc
+rm -f UserAgentBasicTestSuite/*.pyc
+rm -f UserAgentBasicTestSuite/*.py~

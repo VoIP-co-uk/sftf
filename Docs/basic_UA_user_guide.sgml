@@ -1,0 +1,290 @@
+<!DOCTYPE article  PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
+
+<article lang="en">
+<!-- DocBook file was created by LyX 1.3
+  See http://www.lyx.org/ for more information -->
+  <articleinfo>
+   <title>
+SIP Forum Basic UA Test Suite User Guide
+  </title>
+  <date>
+15.03.2004 
+  </date>
+  <author>
+<firstname>Nils</firstname><surname>Ohlmeier</surname>
+  </author>
+  <abstract>
+  <para>
+This user guide gives you a short overview on how to use the SIP Forum Testing Framework to run the SIP Forum Basic UA Test Suite.
+  </para>
+
+  </abstract>
+
+  </articleinfo>
+
+  <sect1>
+   <title>
+Short Overview
+  </title>
+  <para>
+Generally the SIP Forum Basic UA Test Suite is separated into two parts. The first part is the SIP Forum Testing Framework which contains all the logic which is required to run the test, parse the incoming messages and e.g. create replies. The second part is the a subdirectory which contains the Basic UA Tests itself.
+  </para>
+  <para>
+After starting the SIP Forum Testing Framework it will first load the desired tests from the subdirectory. When the tests are successfully loaded the tests will be executed one after another, until all tests are finished. At the end when all tests are done a result overview over all tests will be printed out.
+  </para>
+
+  </sect1>
+
+  <sect1>
+   <title>
+Requirements
+  </title>
+  <para>
+As the testing framework and the test cases are written in Python (<ulink url="http://www.python.org">Python Homepage</ulink>) a working Python installation on the system is required. The software is developed under Linux with Python 2.3. It is also know to work under Windows XP. Python below 2.3 was never tested but may work too. Please report any experiences with other operating systems or Python versions.
+  </para>
+  <para>
+As the test cases 702 and 703 test for working DNS SRV support they require the installation of the dnspython library (<ulink url="http://www.dnspython.org">DNS Python Homepage</ulink>) to check the DNS SRV setup.
+  </para>
+     <sect4>
+      <title>
+Requirements list:
+     </title>
+     <itemizedlist>
+      <listitem>
+      <para>
+supported operating systems (known to work): Linux, Windows XP
+      </para>
+
+     </listitem>
+      <listitem>
+      <para>
+working Python 2.3 installation
+      </para>
+
+     </listitem>
+      <listitem>
+      <para>
+DNS Python library installation (for test cases 702 and 702; details see below)
+      </para>
+
+     </listitem>
+
+     </itemizedlist>
+     <para>
+The tests 702 and 703 require a DNS SRV setup which contains two SRV entries with different priorities which are pointing at two different ports on the host which runs the testing framework. Example:
+     </para>
+     <programlisting>
+<![CDATA[_sip._udp SRV 0 0 5060 testhost.example.com.
+]]><![CDATA[          SRV 1 0 5061 testhost.example.com.
+]]>
+     </programlisting>
+
+     </sect4>
+
+
+
+
+
+
+  </sect1>
+
+  <sect1>
+   <title>
+Testing Framework Invocation
+  </title>
+  <para>
+Invoke the SIP Forum Testing Framework by executing the SFTF script directly (Note: this requires a python interpreter installed at /usr/bin/python) or by calling your python interpreter with the SFTF script as parameter. If you called the SFTF script without a parameter it will print out a help screen like this:
+  </para>
+  <programlisting>
+<![CDATA[SIP Forum Test Framework v0.9.1 by Nils Ohlmeier
+]]><![CDATA[  Copyright (C) 2004 Sip Forum
+]]><![CDATA[
+]]><![CDATA[SFTF.py [-acdChiIrRsSV] [-D directory] [-t testcasename] [testcasename]
+]]><![CDATA[  -a                run all tests
+]]><![CDATA[  -c                run UAC tests only
+]]><![CDATA[  -C                dont use colors on output
+]]><![CDATA[  -d                dont exit on keyboard interrupt
+]]><![CDATA[  -D                add the dir to file search path
+]]><![CDATA[  -h                print this help screen
+]]><![CDATA[  -i                run non-interactive tests only
+]]><![CDATA[  -I                run interactive tests only
+]]><![CDATA[  -r                run tests without REGISTER only
+]]><![CDATA[  -R                run tests with REGISTER only
+]]><![CDATA[  -s                run UAS tests only
+]]><![CDATA[  -S                turn off verbose test summary
+]]><![CDATA[  -t testcasename   load and run testcasename
+]]><![CDATA[                    (can be given multiple times)
+]]><![CDATA[  -V                print the version information
+]]>
+  </programlisting>
+  <para>
+You can run a single test by calling e.g.
+  </para>
+  <programlisting>
+<![CDATA[SFTF.py -t case201
+]]>
+  </programlisting>
+  <para>
+This will try to load the test &ldquo;case201&rdquo; from the test directory (see <xref linkend="sec:Config-File">) and run it if loading was successfull. You can give as many -t parameters as you want (limited by the command line length of the operating system). E.g.
+  </para>
+  <programlisting>
+<![CDATA[SFTF.py -t case201 -t case202
+]]>
+  </programlisting>
+  <para>
+will first load the test case 201 and 202 and then run both test cases.
+  </para>
+  <para>
+The easiest way to prevent giving all test cases you want to run by hand is to use combinations of the parameters c, i, I, r, R and s. For example calling the following command:
+  </para>
+  <programlisting>
+<![CDATA[SFTF.py -i -r
+]]>
+  </programlisting>
+  <para>
+will load and run all test cases which do not require any interaction by a person at the user agent (Note: this will be a subset of the UAC tests, UAC tests generally require interaction by the user) and omit all test cases which require to send a REGISTER to the testing framework.
+  </para>
+  <para>
+Generally it is not recommended to run all test (with the -a parameter), because in this case all test will be loaded without any order and you will have to start calls, send REGISTER's and accept calls without any order. So it is recommended to run e.g. first all test which require to send a REGISTER, then all non-interactive tests, and finally all interactive tests (so you can use the hopefully existant redial button at the UA more effectively ;-).
+  </para>
+
+  </sect1>
+
+  <sect1>
+   <title>
+Configuration<anchor id="sec:Config-File">
+  </title>
+  <para>
+The most IMPORTANT part is the configuration of the user agent which should be tested. Please configure the host and port where the testing framework runs as outgoing proxy and registrar. Do NOT put a proxy between the user agent and the testing framework. This is necessary because several tests of the Basic UA Test Suite require to fake a proxy in front of the user agent. And a proxy between the UA and the testing framework can change the result of the test cases very much.
+  </para>
+  <para>
+The other important part to configure the SIP Forum testing framework is the file Config.py. Generally all parameters in the config file should be commented so we will give here only a brief overview about the most important variables.
+  </para>
+  <variablelist>
+   <varlistentry>
+   <term>
+LOCAL_HOSTNAME
+</term><listitem><para>the full qualified domain name of the host will be detected at framework startup. If this lookup fails (e.g. because of multiple interace at thost) you would have to replace the empty string &ldquo;&rdquo; with the full qualified domain name.
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+   <varlistentry>
+   <term>
+LOCAL_IP
+</term><listitem><para>as the fqdn of the host the IP will also be detected at testing framework startup. If this lookup fails you will have to specify the IP by hand.
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+   <varlistentry>
+   <term>
+LOCAL_PORT
+</term><listitem><para>the port which the testing framework listens on, and from which it sends request.
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+   <varlistentry>
+   <term>
+TEST_HOST
+</term><listitem><para>the IP or hostname of the target device (the user agent) which should be tested.
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+   <varlistentry>
+   <term>
+TEST_HOST_PORT
+</term><listitem><para>the port on which the target device listens.
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+   <varlistentry>
+   <term>
+TEST_USER_NAME
+</term><listitem><para>the user name which will be used for authentication checks.
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+   <varlistentry>
+   <term>
+TEST_USER_PASSWORD
+</term><listitem><para>the password which will be used during authentication.
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+   <varlistentry>
+   <term>
+TEST_CASE_PATH
+</term><listitem><para>the path of the directory which contains the test cases
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+   <varlistentry>
+   <term>
+LOG_LEVEL
+</term><listitem><para>this value from 0 to 5 defines which debug messages should be written to the log file. 0 will log nothing, 5 will be very verbosive.
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+   <varlistentry>
+   <term>
+LOG_DEBUG_STD_OUT
+</term><listitem><para>True or False. Should all debug messages also be printed to standard out (your console). You can safely set this to False, because the messages are all written to the debug file way anyway.
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+   <varlistentry>
+   <term>
+LOG_NETWORK_PACKETS
+</term><listitem><para>True or False. Should all received and sent message be logged to the debug log file as well? It eases debugging a lot, if you can see what message caused the following debug messages in the log file.
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+   <varlistentry>
+   <term>
+LOG_TESTS_STD_OUT
+</term><listitem><para>True or False. Should the message from the test log file also be printed on standard out (your console)? You can safely set this to True, it will only print out only very few informative message during each test case run.
+   </para>
+
+  </listitem>
+
+  </varlistentry>
+
+  </variablelist>
+
+  </sect1>
+
+  <sect1>
+   <title>
+Bug Reports
+  </title>
+  <para>
+If the testing framework ever fails during execution of a test it will print out a traceback an a message to report this bug. In this case please send the debug log file (debug.log by default) to develop at ohlmeier.org. Preferably set the log level (LOG_LEVEL) in Config.py to 5 and especially please turn on network logging by setting LOG_NETWORKS_PACKETS to True (and set LOG_NETWORKS_PACKETS_LEVEL to the value of LOG_LEVEL or lower) and try to reproduce the failure. Then send the debug.log file to develop at ohlmeier.org. Tanks in advance for your support.
+  </para>
+
+  </sect1>
+
+
+
+
+</article>

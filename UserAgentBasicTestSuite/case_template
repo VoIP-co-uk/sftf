@@ -1,0 +1,68 @@
+from TestCase import TestCase
+import NetworkEventHandler as NEH
+import Log
+
+class casename (TestCase):
+
+	def config(self):
+		# a short name of the test
+		self.name = ""
+		# a longer description of what the test is about
+		self.description = ""
+		# starts the test tool the dialog? 
+		# True or False (no default value)
+		self.isClient = 
+		# which transport protocol should be used: UDP or TCP
+		# (no default value)
+		self.transport = ""
+		# is interaction at the UA by someone required? 
+		# True or False (default value)
+		self.interactRequired = 
+		# should retrasnmissions be ignored?
+		# True (default value) or False
+		self.ignoreRetrans =
+		# should the on[METHOD|CODE] functions be called after 
+		# receiving a message with readMessageFromNetwork()?
+		# True (default value) or False
+		self.autoReact =
+		# should writeMessageToNetwork() check the message for completness?
+		# True (default) or False
+		self.fixHeaders =
+		# specify the minimum API version (TestCase.TC_API_VERSION) to run
+		# this test case
+		# default value: None
+		self.minAPIVersion =
+		# specify the maximum API version (TestCase.TC_API_VERSION) to run
+		# this test case
+		# default value: None
+		self.maxAPIVersion =
+		# if this value is set to True in case if no matching dialog can be 
+		# found by the Call-ID the message will be appended to last dialog
+		# instead of creating a new dialog for that message.
+		# WARNING: this only intended to be used for test cases without 
+		#          a Call-ID header !!!
+		# True or False (default value)
+		self.ignoreCallID =
+		# if this value is set to True in case if no matching transaction can 
+		# be found by the CSeq the message will be appended to last transaction
+		# instead of creating a new transaction for that message.
+		# WARNING: this only intended to be used for test cases without 
+		#          a CSeq header !!!
+		# True or False (default value)
+		self.ignoreCSeq =
+
+	def run(self):
+		# creating a network socket is always required
+		self.neh = NEH.NetworkEventHandler(self.transport)
+
+		# what ever you want to do: create requests and send,
+		# or listen for incoming requests
+
+		# at the end please close the socket again
+		self.neh.closeSock()
+
+		# finally check for the results of the test
+		self.addResult(TestCase.TC_, "")
+
+	# if 'autoReact == True' place your on[METHOD|CODE] functions
+	# here (which overwrite the defaults from the TestCase class)
