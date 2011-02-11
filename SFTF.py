@@ -115,7 +115,7 @@ class SFTF:
 		"""
 		#tcl = os.listdir(Config.TEST_CASE_PATH)
 		for d in self.tcdirs:
-			tcl = os.listdir(d)
+			tcl = sorted(os.listdir(d))
 			for i in tcl:
 				if i.endswith(".py"):
 					tcname = i[:len(i)-3]
