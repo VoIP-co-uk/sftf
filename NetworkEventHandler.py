@@ -42,7 +42,7 @@ class NetworkEventHandler (EventHandler):
 	NEH_HALF_CLOSED = 4
 	NEH_CLOSED = 5
 
-	def __init__(self, transp=None, host=None, port=None, addResource=True, createSock=True):
+	def __init__(self, transp=None, host=None, port=None, addResource=True, createSock=True, eventType=SE.SipEvent):
 		EventHandler.__init__(self)
 		self.sock = None
 		self.transp = None
@@ -55,6 +55,7 @@ class NetworkEventHandler (EventHandler):
 		self.pkgsize = Config.MAX_PKG_SIZE
 		self.data = None
 		self.old_data = None
+		self.eventType = eventType
 		if transp is None:
 			transp = Config.DEFAULT_NETWORK_TRANSPORT
 		if (transp.lower() == "udp" or transp.lower() == "tcp"):
@@ -216,7 +217,7 @@ class NetworkEventHandler (EventHandler):
 		"""
 		if (self.transp == socket.SOCK_DGRAM):
 			Log.logDebug("Listening for incoming UDP message on " + str(self.ip) + ":" + str(self.port) + "...", 1)
-			event = SE.SipEvent()
+			event = self.eventType()
 			dstAddr = self.sock.getsockname()
 			event.dstAddress = (dstAddr[0], dstAddr[1], self.transp)
 			if self.timeout is None:
@@ -246,7 +247,7 @@ class NetworkEventHandler (EventHandler):
 			if self.state >= NetworkEventHandler.NEH_HALF_CLOSED:
 				Log.logDebug("NetworkEventHandler.readEvent(): called on at least half closed socket", 1)
 				return None
-			event = SE.SipEvent()
+			event = self.eventType()
 			self.openSock()
 			dstAddr = self.sock.getsockname()
 			event.dstAddress = (dstAddr[0], dstAddr[1], self.transp)

@@ -745,7 +745,7 @@ class TestCase:
 				evtime = ev.time
 				ev = None
 			else:
-				mes, retrans = self.addEvent(ev)
+				mes, retrans = self.addEvent(ev, _NetworkEventHandler)
 				if Config.resources['XMLEH'].has_key(self.name):
 					Config.resources['XMLEH'][self.name].writeMessage(mes)
 				if self.ignoreRetrans and retrans:
