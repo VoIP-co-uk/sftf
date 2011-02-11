@@ -24,6 +24,10 @@
 #
 # $Id: SipEvent.py,v 1.8 2004/03/19 18:37:25 lando Exp $
 #
+
+import Log
+import re
+
 class SipEvent:
 	"""Class instances stores all informations and content of a SIP event."""
 
@@ -44,3 +48,76 @@ class SipEvent:
 				+ 'headers:\'' + str(self.headers) + '\', ' \
 				+ 'body:\'' + str(self.body) + '\' ' \
 				+ 'rawEvent:\'' + str(self.rawEvent) + '\']'
+
+	def genDataString(self):
+		"""Joins the data of a SIP event to a network writeable string.
+		"""
+		ret = ""
+		ret = ret.join(self.headers)
+		ret = ret + "\r\n"
+		bod = ""
+		bod = bod.join(self.body)
+		ret = ret + bod
+		retlen = len(ret)
+		return ret, retlen
+
+	def parseData(self, streamContext, data):
+		""" Identifies and parses a SIP message from the data
+		    streamContext contains any previously received and unparsed
+		    data that may exist in a stream-based transport.  It is None
+		    for non-stream based transports.
+		    If there is extra data after the message, return it and it
+		    will be passed in again as streamContext for interpretation
+		    as part of the next message
+		"""
+		sep = 0
+		ret = False
+		if streamContext is not None:
+			data = streamContext + data
+			streamContext = []
+
+		lines = data.splitlines(True)
+		# separate headers and body
+		try:
+			sep = lines.index("\r\n")
+		except ValueError:
+			Log.logDebug("SipEvent.parseData(): body separator \\r\\n not found", 4)
+			try:
+				sep = lines.index("\n")
+			except ValueError:
+				Log.logDebug("SipEvent.parseData(): no body separator found", 2)
+		if (sep > 0):
+			hl = lines[:sep]
+			if streamContext is not None:
+				self.body = lines[sep+1:]
+			else:
+				co = re.compile("^content-length", re.IGNORECASE)
+				length = None
+				for i in hl:
+					match = co.match(i)
+					if match is not None:
+						length = int(i[15:].replace(":", "").replace("\t", "").strip())
+						Log.logDebug("found content length = " + str(length), 5)
+				if length is not None:
+					tail = ""
+					tail = tail.join(lines[sep+1:])
+					if len(tail) > length:
+						self.body = tail[:length].splitlines(True)
+						streamContext = tail[length:]
+					else:
+						self.body = lines[sep+1:]
+				else:
+					self.body = lines[sep+1:]
+			# remove line folding in headers
+			lines_n = range(0, len(hl))
+			lines_n.reverse()
+			for i in lines_n:
+				if (hl[i].startswith(' ') or hl[i].startswith('\t')):
+					hl[i-1] = hl[i-1] + hl[i]
+					hl[i:i+1] = []
+			self.headers = hl
+			ret = True
+		else:
+			self.headers = lines
+		return streamContext,ret
+

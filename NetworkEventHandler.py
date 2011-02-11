@@ -29,7 +29,6 @@ import Log, Config, socket, select, copy
 from SCException import SCException, SCNotImplemented
 import SipEvent as SE
 import time
-import re
 
 class NetworkEventHandler (EventHandler):
 	"""This class handles all SIP events which are going and comming over
@@ -210,61 +209,6 @@ class NetworkEventHandler (EventHandler):
 		"""
 		self.timeout = float(_timeout)
 
-	def seperateData(self, _event):
-		"""Tries to sperate the received data into headers and body.
-		Returns True on success, False otherwise.
-		"""
-		sep = 0
-		ret = False
-		if self.old_data is not None:
-			self.data = self.old_data + self.data
-			self.old_data = None
-		lines = self.data.splitlines(True)
-		# seperate headers and body
-		try:
-			sep = lines.index("\r\n")
-		except ValueError:
-			Log.logDebug("NEL.seperateData(): body seperator \\r\\n not found", 4)
-			try:
-				sep = lines.index("\n")
-			except ValueError:
-				Log.logDebug("NEL.seperateData(): no body seperator found", 2)
-		if (sep > 0):
-			hl = lines[:sep]
-			if self.transp == socket.SOCK_DGRAM:
-				_event.body = lines[sep+1:]
-			elif self.transp == socket.SOCK_STREAM:
-				co = re.compile("^content-length", re.IGNORECASE)
-				length = None
-				for i in hl:
-					match = co.match(i)
-					if match is not None:
-						length = int(i[15:].replace(":", "").replace("\t", "").strip())
-						Log.logDebug("found content length = " + str(length), 5)
-				if length is not None:
-					tail = ""
-					tail = tail.join(lines[sep+1:])
-					if len(tail) > length:
-						_event.body = tail[:length].splitlines(True)
-						self.old_data = tail[length:]
-					else:
-						_event.body = lines[sep+1:]
-				else:
-					_event.body = lines[sep+1:]
-			else:
-				raise SCNotImplemented("NetworkEventHandler", "readEvent", "unsupported transport")
-			# remove line folding in headers
-			lines_n = range(0, len(hl))
-			lines_n.reverse()
-			for i in lines_n:
-				if (hl[i].startswith(' ') or hl[i].startswith('\t')):
-					hl[i-1] = hl[i-1] + hl[i]
-					hl[i:i+1] = []
-			_event.headers = hl
-			ret = True
-		else:
-			_event.headers = lines
-		return ret
 
 	def readEvent(self):
 		"""Reads from the network socket of the instance and returns
@@ -292,7 +236,7 @@ class NetworkEventHandler (EventHandler):
 				return None
 			event.srcAddress = (srcAddr[0], srcAddr[1], self.transp)
 			event.received = True
-			self.seperateData(event)
+			event.parseData(None, self.data)
 			if Config.LOG_NETWORK_PACKETS:
 				Log.logDebug("received:\n" + str(self.data), Config.LOG_NETWORK_PACKETS_LEVEL)
 			event.rawEvent = self.copy()
@@ -356,7 +300,8 @@ class NetworkEventHandler (EventHandler):
 				return None
 			event.srcAddress = (srcAddr[0], srcAddr[1], self.transp)
 			event.received = True
-			if self.seperateData(event):
+			self.old_data, parsed = event.parseData(self.old_data, self.data)
+			if parsed:
 				if Config.LOG_NETWORK_PACKETS:
 					Log.logDebug("received:\n" + str(self.data), Config.LOG_NETWORK_PACKETS_LEVEL)
 				event.rawEvent = self.copy()
@@ -367,17 +312,6 @@ class NetworkEventHandler (EventHandler):
 		else:
 			raise SCNotImplemented("NetworkEventHandler", "readEvent", "unsupported transport")
 
-	def genDataString(self, event):
-		"""Joins the data of a SIP event to a network writeable string.
-		"""
-		ret = ""
-		ret = ret.join(event.headers)
-		ret = ret + "\r\n"
-		bod = ""
-		bod = bod.join(event.body)
-		ret = ret + bod
-		retlen = len(ret)
-		return ret, retlen
 
 	def writeEvent(self, event):
 		"""Writes the given SIP event through the socket to the destination
@@ -413,7 +347,7 @@ class NetworkEventHandler (EventHandler):
 				event.srcAddress = (event.srcAddress[0], event.srcAddress[1], socket.SOCK_STREAM)
 		if (event.srcAddress[0] != "file") and (event.srcAddress[2] != self.transp):
 			raise SCException("NetworkEventHandler", "writeEvent", "event transport != socket type")
-		self.data, bytes = self.genDataString(event)
+		self.data, bytes = event.genDataString()
 		if ((self.ip is None) and (event.dstAddress is None)):
 			raise SCException("NetworkEventHandler", "writeEvent", "missing destination")
 		elif (self.ip is None and (event.srcAddress is not None)):
