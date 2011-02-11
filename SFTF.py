@@ -78,7 +78,7 @@ class SFTF:
 		self.debug = False
 		self.test = []
 		self.directories = []
-		self.tcdirs = []
+		self.tcdirs = str(Config.TEST_CASE_PATH).split(";")
 		for dirs in str(Config.PARSER_PATH).split(';'):
 			sys.path.append(dirs)
 		# FIXME: currently this just prevents compile time during run time
@@ -129,7 +129,6 @@ class SFTF:
 		Log.logDebug("======================", 2)
 		Log.logDebug("SFTF.run(): v" + str(self.ver) + " started", 4)
 		#sys.path.append(Config.TEST_CASE_PATH)
-		self.tcdirs = str(Config.TEST_CASE_PATH).split(";")
 		for d in self.tcdirs:
 			sys.path.append(d)
 		for p in self.directories:
@@ -292,6 +291,7 @@ class SFTF:
 			"  -S                turn off verbose test summary\n" \
 			"  -t testcasename   load and run testcasename\n" \
 			"                    (can be given multiple times)\n" \
+			"  -u directory      override test-suite directory\n" \
 			"  -V                print the version information\n"
 
 def main():
@@ -302,7 +302,7 @@ def main():
 	Log.init()
 	sc=SFTF()
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "acCdD:hiIrRsSt:V", ["all", "client", "debug", "directory", "help", "interactive", "no-color", "non-interactive", "no-register", "no-summary", "register", "server", "testcase=", "version"])
+		opts, args = getopt.getopt(sys.argv[1:], "acCdD:hiIrRsSt:u:V", ["all", "client", "debug", "directory", "help", "interactive", "no-color", "non-interactive", "no-register", "no-summary", "register", "server", "testcase=", "test-suite=", "version"])
 	except getopt.GetoptError, arg:
 		print arg
 		sc.usage()
@@ -343,6 +343,8 @@ def main():
 			sc.verboseSummary = False
 		if o in ("-t", "--testcase"):
 			sc.addTestCase(a)
+		if o in ("-u", "--test-suite"):
+			sc.tcdirs = a.split(";")
 		if o in ("-V", "--version"):
 			sc.version()
 			sys.exit()
