@@ -266,12 +266,10 @@ class Transaction:
 			reply.setParsedHeaderValue("Record-Route", rr)
 			reply.setHeaderValue("Record-Route", rr.create())
 		if code/100 == 2 and req.method == "INVITE":
-			con = Helper.createClassInstance("Contact")
-			if (self.dialog is not None) and (self.dialog.localUri is not None):
-				con.uri = copy.deepcopy(self.dialog.localUri.uri)
-				con.uri.params = []
-				con.uri.headers = []
+			if (self.dialog is not None):
+				con = self.dialog.getLocalContact()
 			else:
+				con = Helper.createClassInstance("Contact")
 				con.uri.protocol = "sip"
 				con.uri.username = Config.SC_USER_NAME
 				con.uri.host = Config.LOCAL_IP

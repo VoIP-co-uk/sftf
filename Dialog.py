@@ -36,7 +36,7 @@ class Dialog:
 	DI_ST_ESTABLISHED = 1
 	DI_ST_TERMINATED = 2
 
-	def __init__(self):
+	def __init__(self, neh=None):
 		self.number = None
 		self.localUri = None
 		self.remoteUri = None
@@ -44,10 +44,19 @@ class Dialog:
 		self.remoteCSeq = None
 		self.remoteContact = None
 		self.localCSeq = None
+		self.localContact = None
 		self.RouteSet = None
 		self.ignoreRoute = False
 		self.state = Dialog.DI_ST_INIT
 		self.transaction = []
+		if neh is not None:
+			con = Helper.createClassInstance("Contact")
+			con.uri.protocol = "sip"
+			con.uri.username = Config.SC_USER_NAME
+			con.uri.host = neh.localip
+			con.uri.port = neh.localport
+			self.localContact = con
+
 
 	def __str__(self):
 		return '[number:\'' + str(self.number) + '\', ' \
@@ -57,6 +66,7 @@ class Dialog:
 				+ 'remoteCSeq:\'' + str(self.remoteCSeq) + '\', ' \
 				+ 'remoteContact:\'' + str(self.remoteContact) + '\', ' \
 				+ 'localCSeq:\'' + str(self.localCSeq) + '\', ' \
+				+ 'localContact:\'' + str(self.localContact) + '\', ' \
 				+ 'RouteSet:\'' + str(self.RouteSet) + '\', ' \
 				+ 'ignoreRoute:\'' + str(self.ignoreRoute) + '\', ' \
 				+ 'state:\'' + str(self.state) + '\', ' \
@@ -255,3 +265,23 @@ class Dialog:
 			trans.number = len(self.transaction)-1
 			if (self.localCSeq is None and self.remoteCSeq is None):
 				Log.logDebug("Dialog.appendTransaction(): dialog informations incomplete: missing CSeq", 1)
+
+
+	def getLocalContact(self):
+		"""This function returns the local contact to be used for this dialog"""
+		if (self.localContact is not None):
+			Log.logDebug("Dialog.getLocalContact(): deep-copy localContact", 2)
+			con = copy.deepcopy(self.localContact)
+		elif (self.localUri is not None):
+			Log.logDebug("Dialog.getLocalContact(): deep-copy localuri", 2)
+			con = Helper.createClassInstance("Contact")
+			con.uri = copy.deepcopy(self.localUri.uri)
+			con.uri.params = []
+			con.uri.headers = []
+		else:
+			con = Helper.createClassInstance("Contact")
+			con.uri.protocol = "sip"
+			con.uri.username = Config.SC_USER_NAME
+			con.uri.host = Config.LOCAL_IP
+			con.uri.port = Config.LOCAL_PORT
+		return con

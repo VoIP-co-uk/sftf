@@ -270,9 +270,9 @@ class TestCase:
 		#Log.logDebug("TestCase.findFEH(): found " + str(len(ret)) + " FEHs", 5)
 		#return ret
 
-	def newDialog(self):
+	def newDialog(self, neh=None):
 		"""Adds and returns a new dialog instance."""
-		dia = Dialog()
+		dia = Dialog(neh)
 		self.dialog.append(dia)
 		dia.number = len(self.dialog)-1
 		Log.logDebug("newDialog(): added new dialog number " + str(dia.number), 5)
@@ -290,7 +290,7 @@ class TestCase:
 		dia.appendTransaction(trans)
 		return trans
 
-	def addMessage(self, message, dia=None, trans=None):
+	def addMessage(self, message, dia=None, trans=None, neh=None):
 		"""Adds the given SipMessage instance 'message' to the correct dialog
 		and transaction. If 'dia' and/or 'trans' are not given the correct
 		dialog and transaction will be looked up or new one will be created
@@ -340,10 +340,10 @@ class TestCase:
 						if len(self.dialog) > 0:
 							cur_dia = self.dialog[len(self.dialog)-1]
 						else:
-							cur_dia = self.newDialog()
+							cur_dia = self.newDialog(neh)
 					elif message.isRequest:
 						Log.logDebug("TestCase.addMessage(): no matching dialog found => creating new one", 3)
-						cur_dia = self.newDialog()
+						cur_dia = self.newDialog(neh)
 					elif not self.ignoreCSeq:
 						Log.logDebug("TestCase.addMessage(): dropping response without matching dialog", 4)
 						#FIXME very dirty hack: if we do not store the message
@@ -486,7 +486,7 @@ class TestCase:
 			else:
 				Log.logDebug("TestCase.parseMessage(): missing parser for body '" + parser_class + "'", 3)
 
-	def addEvent(self, _event):
+	def addEvent(self, _event, neh):
 		"""Converts the given SipEvent into a SipMessage instance. It calls
 		parseMessage and addMessage, and returns the SipMessage instance 
 		(either a SipReply instance or a SipRequest instance).
@@ -509,7 +509,7 @@ class TestCase:
 			if res:
 				self.results.extend(res)
 		self.parseMessage(message)
-		retrans = self.addMessage(message)
+		retrans = self.addMessage(message, neh=neh)
 		return message, retrans
 
 	def getLastDialog(self, dia=None):
@@ -596,7 +596,7 @@ class TestCase:
 		# create the reply
 		rep = trans.createReply(code, reason, mes, createEvent)
 		self.parseMessage(rep)
-		self.addMessage(rep)
+		self.addMessage(rep, dia, trans)
 		return rep
 
 	def createChallenge(self, mes=None, realm=None, qop=False, proxy=False):
@@ -849,7 +849,7 @@ class TestCase:
 			self.addResource(sockpair)
 		return sockpair
 		
-	def createRequest(self, method, ruri=None, trans=None, dia=None, createEvent=True):
+	def createRequest(self, method, ruri=None, trans=None, dia=None, createEvent=True, neh=None):
 		"""Creates and returns a SIP request with the given 'method' as request
 		method. If 'ruri' is None the request URI will constructed out of the
 		username, hostname and port of the target from the configuration, 
@@ -877,9 +877,9 @@ class TestCase:
 		if dia is None:
 			dia = self.getLastDialog()
 			if dia is None:
-				dia = self.newDialog()
+				dia = self.newDialog(neh)
 			elif dia.state & Dialog.DI_ST_TERMINATED:
-				dia = self.newDialog()
+				dia = self.newDialog(neh)
 			else:
 				if ruri is None:
 					ruri, route, dsthost = dia.getRoutingTarget()
@@ -935,10 +935,12 @@ class TestCase:
 			req.setHeaderValue("CSeq", str(dia.localCSeq.number + 1) + " " + str(method) + "\r\n")
 		if (method.lower() == "cancel") or (method.lower() == "ack"):
 			req.setHeaderValue("Via", trans.message[0].getHeaderValue("Via"))
+		elif neh is not None:
+			req.setHeaderValue("Via", "SIP/2.0/" + self.transport + " " + str(neh.localip) + ":" + str(neh.localport) + "\r\n")
 		else:
 			req.setHeaderValue("Via", "SIP/2.0/" + self.transport + " " + str(Config.LOCAL_IP) + ":" + str(Config.LOCAL_PORT) + "\r\n")
 		req.setHeaderValue("Max-Forwards", "70\r\n")
-		req.setHeaderValue("Contact", "sip:" + Config.SC_USER_NAME + "@" + Config.LOCAL_IP + ":" + str(Config.LOCAL_PORT) + "\r\n")
+		req.setHeaderValue("Contact", dia.getLocalContact().create())
 		if route is not None:
 			req.setHeaderValue("Route", route + "\r\n")
 		if method.lower() == "invite":

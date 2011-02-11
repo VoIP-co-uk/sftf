@@ -70,6 +70,8 @@ class NetworkEventHandler (EventHandler):
 			host = host[1:]
 		if host.endswith("]"):
 			host = host[:len(host)-1]
+		self.localip = host
+		self.localport = port
 		# Because we can not return another NEH instance if a new instance for
 		# the same triplet (transport, ip, port) was requested, we simply
 		# close the existing NEH and the create a new one
