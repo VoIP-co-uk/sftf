@@ -46,6 +46,34 @@ class applicationsdp:
 		self.fmts = None
 		self.rtpmap = None
 		self.state = None
+
+
+	def generate(self):
+		sdp = []
+		sdp.append('v='+str(self.version))
+		sdp.append('o='+' '.join(self.origin))
+		sdp.append('s='+self.sessionname)
+		if self.information is not None:
+			sdp.append('i='+self.information)
+		if self.uri is not None:
+			sdp.append('u='+self.uri)
+		if self.emails is not None:
+			sdp.extend( ['e='+e for e in self.emails] )
+		if self.phones is not None:
+			sdp.extend( ['p='+p for p in self.phones] )
+		if self.connection is not None:
+			sdp.append('c='+' '.join(self.connection))
+		if self.bandwidth is not None:
+			sdp.append('b='+':'.join(self.bandwidth))
+		if self.time is not None:
+			sdp.append('t='+self.time)
+		if self.key is not None:
+			sdp.append('k='+self.key)
+		if self.media is not None:
+			sdp.append('m='+' '.join(self.media))
+		if self.attributes is not None:
+			sdp.extend( ['a='+a for a in self.attributes] )
+		return '\r\n'.join(sdp)+'\r\n'
 		
 
 	def __str__(self):
