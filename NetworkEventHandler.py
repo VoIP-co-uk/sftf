@@ -179,16 +179,20 @@ class NetworkEventHandler (EventHandler):
 		"""
 		if (_transp != socket.SOCK_DGRAM) and (_transp != socket.SOCK_STREAM):
 			self.setTransport(_transp)
-		self.sock = socket.socket(Config.socket_type, self.transp)
+		sock = socket.socket(Config.socket_type, self.transp)
 		try:
 			if Config.ipv6:
 				#FIXME: no clue what flowinfo and scopeid are good for
-				self.sock.bind((_ip, _port, 0, 1))
+				sock.bind((_ip, _port, 0, 1))
 			else:
-				self.sock.bind((_ip, _port))
+				sock.bind((_ip, _port))
 		except socket.error, inst:
 			Log.logDebug("NetworkEventHandler.createSock(): failed to bind " + str(_transp) + " socket to " + str(_ip) + ":" + str(_port), 1)
 			raise inst
+		self.addSock(sock)
+
+	def addSock(self, sock):
+		self.sock = sock
 		self.state = NetworkEventHandler.NEH_BOUND
 		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		sn = self.sock.getsockname()
@@ -500,6 +504,8 @@ def getFQDN(ip):
 		return hn_new
 
 def getTransportNumber(_transp):
+	if (_transp == socket.SOCK_DGRAM) or (_transp == socket.SOCK_STREAM):
+		return _transp
 	if _transp.lower() == "udp":
 		return socket.SOCK_DGRAM
 	elif _transp.lower() == "tcp":
