@@ -409,40 +409,34 @@ def createMediaSockets(ip=None, port=None):
 		sock = socket.socket(Config.socket_type, socket.SOCK_DGRAM)
 		sock2 = socket.socket(Config.socket_type, socket.SOCK_DGRAM)
 		try:
-			print "trying to bind sock"
 			sock.bind((ip, port))
 			if port2 == 0:
 				ret_ip, port = sock.getsockname()
 				port2 = port + 1
 			try:
-				print str(port) + " trying to bind sock2 to " + str(port2)
 				sock2.bind((ip, port2))
 				if (port % 2 == 0):
-					print "sock is even"
+					Log.logDebug("Media sockets bound, RTP: " + str(ip) + ":" + str(port) + ", RTCP: " + str(ip) + ":" + str(port2), 1)
 					ret_pair = (sock, sock2)
 					success = True
 				else:
-					print "sock is not even"
 					sock = socket.socket(Config.socket_type, socket.SOCK_DGRAM)
 					port = port + 2
 					try:
-						print "trying to bind sock to " + str(port)
 						sock.bind((ip, port))
+						port, port2 = port2, port
+						Log.logDebug("Media sockets bound, RTP: " + str(ip) + ":" + str(port) + ", RTCP: " + str(ip) + ":" + str(port2), 1)
 						ret_pair = (sock2, sock)
-						port = port2
 						success = True
 					except socket.error:
-						print "re-binding of sock failed"
 						sock2.close()
 						port = port2 + 3
 						port2 = port + 1
 			except socket.error:
-				print "binding of sock2 failed"
 				sock.close()
 				port = port + 2
 				port2 = port + 1
 		except socket.error:
-			print "binding of sock failed"
 			port = port + 1
 	return ret_pair, ret_ip, port
 
