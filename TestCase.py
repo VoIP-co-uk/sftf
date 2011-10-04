@@ -304,26 +304,31 @@ class TestCase:
 			cur_dia = cur_trans.dialog
 		if cur_dia is None:
 			# trying to find the dialog first by the To or From tag
-			if message.hasParsedHeaderField("To"):
-				to = message.getParsedHeaderValue("To")
-				if to.tag is not None:
-					if to.tag.lower().startswith("sct-"):
-						tag = message.getParsedHeaderValue("To").tag
-			if (tag is None) and message.hasParsedHeaderField("From"):
-				fr = message.getParsedHeaderValue("From")
-				if fr.tag is not None:
-					if fr.tag.lower().startswith("sct-"):
-						tag = message.getParsedHeaderValue("From").tag
-			if tag is not None:
-				tmp = tag[4:]
-				numend = tmp.find("-")
-				if numend != -1:
-					tmp_num = tmp[:numend]
-					if tmp_num.isdigit():
-						tag_num = int(tmp_num)
-						if len(self.dialog) > tag_num:
-							cur_dia = self.dialog[tag_num]
-							Log.logDebug("TestCase.addMessage(): dialog found by To/From tag", 5)
+			if message.isRequest:
+				whereLocal, whereRemote = "To", "From"
+			else:
+				whereLocal, whereRemote = "From", "To"
+
+			if message.hasParsedHeaderField(whereLocal):
+				localTag = message.getParsedHeaderValue(whereLocal).tag
+				if localTag is not None and localTag.lower().startswith("sct-"):
+					pattern, dlgNum, rest = localTag.split('-', 2)
+					if dlgNum.isdigit():
+						dlgNum = int(dlgNum)
+						if len(self.dialog) > dlgNum:
+							cur_dia = self.dialog[dlgNum]
+							Log.logDebug("TestCase.addMessage(): dialog found by local tag", 5)
+
+			if cur_dia is None and message.hasParsedHeaderField(whereRemote):
+				remoteTag = message.getParsedHeaderValue(whereRemote).tag
+				if remoteTag is not None and remoteTag.lower().startswith("sct-"):
+					# No local tag, but a remote tag we recognise:
+					# --> Message may have traversed a proxy or similar
+					# do not assign this to the same dialog, and don't fallback to CallID matching
+					# which will also do this!
+					cur_dia = self.newDialog(neh)
+					Log.logDebug("TestCase.addMessage(): new dialog, remote tag looks familiar", 5)
+
 		# dialog finding by tag failed, trying by brute force
 		if cur_dia is None:
 			Log.logDebug("TestCase.addMessage(): dialog tag matching failed, falling back to 2543 matching", 3)
