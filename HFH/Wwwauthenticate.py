@@ -82,10 +82,13 @@ class Wwwauthenticate (HeaderFieldHandler):
 				else:
 					self.params.append(v)
 					raise HFHException("WWWAuthenticate", "parse", "quotation not closed")
-			elif (eq != -1 and (eq < cm or cm == -1)):
+			elif (eq != -1 and eq < cm):
 				nameval = v[eq+1:cm]
 				oldv = v[:cm]
 				v = v[cm+1:].lstrip()
+			elif (eq != -1 and cm == -1):
+				nameval = v[eq+1:]
+				v = ''
 			else:
 				self.params.append(v)
 				raise HFHException("WWWAuthenticate", "parse", "failed to parse auth token")
