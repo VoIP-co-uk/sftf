@@ -127,7 +127,29 @@ class Authorization (HeaderFieldHandler):
 			vlen = len(v)
 
 	def create(self):
-		raise SCNotImplemented("Authorization", "create", "not implemented")
+		resp = []
+		if self.username:
+			resp.append('username="'+self.username+'"')
+		if self.realm:
+			resp.append('realm="'+self.realm+'"')
+		if self.nonce:
+			resp.append('nonce="'+self.nonce+'"')
+		if self.uri:
+			resp.append('uri="'+self.uri+'"')
+		if self.response:
+			resp.append('response="'+self.response+'"')
+		if self.algorithm:
+			resp.append('algorithm='+self.algorithm)
+		if self.cnonce:
+			resp.append('cnonce="'+self.cnonce+'"')
+		if self.opaque:
+			resp.append('opaque="'+self.opaque+'"')
+		if self.qop:
+			resp.append('qop="'+self.qop+'"')
+		if self.nc:
+			resp.append('nc='+self.nc)
+
+		return 'Digest ' + ','.join(resp) + '\r\n'
 
 	def verify(self, auth_HF):
 		res = []
