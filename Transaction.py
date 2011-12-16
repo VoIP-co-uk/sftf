@@ -158,7 +158,7 @@ class Transaction:
 				if message.code < 200:
 					Log.logDebug("Transaction.appendMessage(): ignoring provisional response for target update", 3)
 				elif (self.number > 1) and (message.code >= 400):
-					Log.logDebug("Transaction.appendMessage(): ignoring negative in dialog reply for target update")
+					Log.logDebug("Transaction.appendMessage(): ignoring negative in dialog reply for target update", 3)
 				elif self.dialog and self.dialog.remoteUri:
 					if self.dialog.remoteUri.tag is None:
 						if message.hasParsedHeaderField("To"):
