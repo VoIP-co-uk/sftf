@@ -166,11 +166,14 @@ class Dialog:
 				Log.logDebug("Dialog.buildRouteSet(): RouteSet: " + str(self.RouteSet), 5)
 			else:
 				Log.logDebug("Dialog.buildRouteSet(): lastReply has no parsed Record-Route", 4)
-			if self.transaction[0].lastReply.hasParsedHeaderField("Contact"):
-				self.remoteContact = self.transaction[0].lastReply.getParsedHeaderValue("Contact")
-				Log.logDebug("Dialog.buildRouteSet(): remoteContact updated in isClient", 5)
+			if self.transaction[0].lastReply.code < 300:
+				if self.transaction[0].lastReply.hasParsedHeaderField("Contact"):
+					self.remoteContact = self.transaction[0].lastReply.getParsedHeaderValue("Contact")
+					Log.logDebug("Dialog.buildRouteSet(): remoteContact updated in isClient", 5)
+				else:
+					Log.logDebug("Dialog.buildRouteSet(): lastReply has no parsed Contact", 2)
 			else:
-				Log.logDebug("Dialog.buildRouteSet(): lastReply has no parsed Contact", 2)
+				Log.logDebug("Dialog.buildRouteSet(): not updating remoteContact on failure response", 5)
 			return True
 		else:
 			Log.logDebug("Dialog.buildRouteSet(): called for server side", 5)

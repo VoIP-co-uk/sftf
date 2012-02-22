@@ -170,7 +170,7 @@ class Transaction:
 						else:
 							Log.logDebug("Transaction.appendMessage(): missing parsed To header, using raw (which can be empty)", 2)
 							self.dialog.remoteUri = copy.copy(message.getHeaderValue("To"))
-					if message.hasHeaderField("Contact"):
+					if message.hasHeaderField("Contact") and message.code < 300:
 						if message.hasParsedHeaderField("Contact"):
 							if message.getParsedHeaderValue("Contact").uri.host is not None:
 								Log.logDebug("Transaction.appendMessage(): updating remoteContact from reply", 3)
