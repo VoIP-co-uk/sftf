@@ -39,7 +39,7 @@ class Allow(HeaderFieldHandler):
 		return '[methods:\'' + str(self.methods) + '\']'
 
 	def parse(self, value):
-		self.methods = value.replace("\r", "").replace("\t", "").strip().split(",")
+		self.methods = map(str.strip, value.replace("\r", "").replace("\t", "").split(","))
 
 	def create(self):
 		ret = ""

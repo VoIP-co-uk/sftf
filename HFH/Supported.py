@@ -39,7 +39,7 @@ class Supported(HeaderFieldHandler):
 		return '[tags:\'' + str(self.tags) + '\']'
 
 	def parse(self, value):
-		self.tags = value.replace("\r", "").replace("\t", "").strip().split(",")
+		self.tags = map(str.strip, value.replace("\r", "").replace("\t", "").split(","))
 
 	def create(self):
 		ret = ""
