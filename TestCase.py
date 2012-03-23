@@ -76,6 +76,7 @@ class TestCase:
 		self.results = []
 		self.dialog = []
 		self.sink = []
+		self.uniqueTimestamp = None
 
 	def __str__(self):
 		return '[name:\'' + str(self.name) + '\', ' \
@@ -1006,7 +1007,7 @@ class TestCase:
 			if dia is None:
 				raise SCException("TestCase", "writeMessageToNetwork", "no dialog found for message")
 			elif dia.localUri.tag is None:
-				dia.localUri.tag = "SCt-" + str(dia.number) + "-" + str(time.time()) + "-" + Config.LOCAL_IP + "~" + str(self.__class__.__name__)
+				dia.localUri.tag = "SCt-" + str(dia.number) + "-" + str(self.getUniqueTimestamp()) + "-" + Config.LOCAL_IP + "~" + str(self.__class__.__name__)
 			if trans is None:
 				raise SCException("TestCase", "wirteMessageToNetwork", "no transaction found for message")
 			if isinstance(Message, SipRequest):
@@ -1040,7 +1041,7 @@ class TestCase:
 						via = Message.getParsedHeaderValue("Via")
 						if mes_req:
 							if via.branch is None:
-								via.branch = "z9hG4bK-SCb-" + str(trans.number) + "-" + str(time.time()) + "-" + Config.LOCAL_IP
+								via.branch = "z9hG4bK-SCb-" + str(trans.number) + "-" + str(self.getUniqueTimestamp()) + "-" + Config.LOCAL_IP
 								regen = True
 							if _NetworkEventHandler.getTransport() != via.transport.upper():
 								via.transport = _NetworkEventHandler.getTransport()
@@ -1235,3 +1236,15 @@ class TestCase:
 		self.addMessage(new_mes, dia)
 		Log.logDebug("TestCase.reTry(): retrying same request with new Call-ID and CSeq", 2)
 		self.writeMessageToNetwork(message.event.rawEvent, new_mes)
+
+	def getUniqueTimestamp(self):
+		""" Using time.time() as a branch parameter isn't unique if multiple
+				transactions are started within 10ms.  Therefore, if a
+				timestamp is required that would otherwise be the same as a
+				previously used one, fake up a small delta to keep them unique.
+		"""
+		ts = time.time()
+		if self.uniqueTimestamp and ts <= (self.uniqueTimestamp + 0.01):
+			ts = self.uniqueTimestamp + 0.01
+		self.uniqueTimestamp = ts
+		return ts
