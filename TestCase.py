@@ -1041,7 +1041,7 @@ class TestCase:
 						via = Message.getParsedHeaderValue("Via")
 						if mes_req:
 							if via.branch is None:
-								via.branch = "z9hG4bK-SCb-" + str(trans.number) + "-" + str(self.getUniqueTimestamp()) + "-" + Config.LOCAL_IP
+								via.branch = "z9hG4bK-SCb-" + str(trans.number) + "-" + str(self.getUniqueTimestamp()) + "-" + Config.LOCAL_IP + "~" + str(self.__class__.__name__)
 								regen = True
 							if _NetworkEventHandler.getTransport() != via.transport.upper():
 								via.transport = _NetworkEventHandler.getTransport()
