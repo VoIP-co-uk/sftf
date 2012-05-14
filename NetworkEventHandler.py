@@ -114,6 +114,7 @@ class NetworkEventHandler (EventHandler):
 		new.pkgsize = copy.copy(self.pkgsize)
 		new.data = copy.copy(self.data)
 		new.old_data = copy.copy(self.old_data)
+		new.eventType = copy.copy(self.eventType)
 		if sock is not None:
 			new.sock = sock
 		return new
@@ -180,6 +181,7 @@ class NetworkEventHandler (EventHandler):
 		if (_transp != socket.SOCK_DGRAM) and (_transp != socket.SOCK_STREAM):
 			self.setTransport(_transp)
 		sock = socket.socket(Config.socket_type, self.transp)
+		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		try:
 			if Config.ipv6:
 				#FIXME: no clue what flowinfo and scopeid are good for
@@ -194,7 +196,6 @@ class NetworkEventHandler (EventHandler):
 	def addSock(self, sock):
 		self.sock = sock
 		self.state = NetworkEventHandler.NEH_BOUND
-		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		sn = self.sock.getsockname()
 		self.ip = sn[0]
 		perc = self.ip.find("%")
@@ -267,13 +268,17 @@ class NetworkEventHandler (EventHandler):
 				if self.state == NetworkEventHandler.NEH_LISTEN:
 					#FIXME: what do we get for an allready connected sock here?
 					con_sock, srcAddr = s_in[0].accept()
-					if not hasattr(Config, "resources"):
-						self.sock.close()
-					else:
-						new_neh = self.copy(sock=self.sock)
+
+					if hasattr(Config, "resources"):
+						new_neh = self.copy(sock=con_sock)
+						new_neh.remoteip = srcAddr[0]
+						new_neh.remoteport = srcAddr[1]
+						new_neh.state = NetworkEventHandler.NEH_CONNECTED
 						key = str(getTransportNumber(new_neh.transp)) + str(new_neh.ip) + str(new_neh.port) + "00"
 						Config.resources['NEH'][key] = new_neh
+						return new_neh.readEvent()
 
+					self.sock.close()
 					self.sock = con_sock
 					self.state = NetworkEventHandler.NEH_CONNECTED
 					#FIXME: this address can probably also contains IPv6 
@@ -309,7 +314,7 @@ class NetworkEventHandler (EventHandler):
 			if parsed:
 				if Config.LOG_NETWORK_PACKETS:
 					Log.logDebug("received:\n" + str(self.data), Config.LOG_NETWORK_PACKETS_LEVEL)
-				event.rawEvent = self.copy()
+				event.rawEvent = self
 				return event
 			else:
 				#FIXME a loop to read more data?!
@@ -382,7 +387,7 @@ class NetworkEventHandler (EventHandler):
 		else:
 			raise SCNotImplemented("NetworkEventHandler", "writeEvent", "unsupport transport")
 		event.time = time.time()
-		event.rawEvent = self.copy()
+		event.rawEvent = self
 		Log.logDebug("message length = " + str(bytes) + " bytes, sent " + str(bytessent) + " bytes", 4)
 		if (bytessent == bytes):
 			if Config.LOG_NETWORK_PACKETS:
