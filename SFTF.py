@@ -240,7 +240,10 @@ class SFTF:
 			k[0].close()
 			k[1].close()
 		print "====================\nTest result summary:\n===================="
-		nocol = "\x1b[0;0m"
+		if self.colorOutput:
+			nocol = "\x1b[0;0m"
+		else:
+			nocol = ''
 		Config.LOG_TESTS_STD_OUT = False
 		for i in self.test:
 			res = i.getOneResult()
