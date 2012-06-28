@@ -942,7 +942,7 @@ class TestCase:
 		if (method.lower() == "cancel") or (method.lower() == "ack"):
 			req.setHeaderValue("Via", trans.message[0].getHeaderValue("Via"))
 		elif neh is not None:
-			req.setHeaderValue("Via", "SIP/2.0/" + self.transport + " " + str(neh.localip) + ":" + str(neh.localport) + "\r\n")
+			req.setHeaderValue("Via", "SIP/2.0/" + neh.getTransport() + " " + str(neh.localip) + ":" + str(neh.localport) + "\r\n")
 		else:
 			req.setHeaderValue("Via", "SIP/2.0/" + self.transport + " " + str(Config.LOCAL_IP) + ":" + str(Config.LOCAL_PORT) + "\r\n")
 		req.setHeaderValue("Max-Forwards", "70\r\n")
@@ -966,7 +966,10 @@ class TestCase:
 				dsthost = (Config.TEST_HOST, int(Config.TEST_HOST_PORT))
 			else:
 				dsthost = (dsthost[0], dsthost[1])
-			req.setEventAddresses((Config.LOCAL_IP, int(Config.LOCAL_PORT), self.transport), dsthost)
+			if neh is not None:
+				req.setEventAddresses((neh.localip, neh.localport, neh.getTransport()), dsthost)
+			else:
+				req.setEventAddresses((Config.LOCAL_IP, int(Config.LOCAL_PORT), self.transport), dsthost)
 		self.parseMessage(req)
 		self.addMessage(req, dia, trans)
 		return req
@@ -1095,10 +1098,10 @@ class TestCase:
 				if dia.RouteSet is not None:
 					if not Message.hasParsedHeaderField("Route"):
 						uri, routeset, dsthost = dia.getRoutingTarget()
-						Message.setEventAddresses((Config.LOCAL_IP, int(Config.LOCAL_PORT), self.transport), dsthost)
+						Message.setEventAddresses((Config.LOCAL_IP, int(Config.LOCAL_PORT), _NetworkEventHandler.transp), dsthost)
 			else:
 				#FIXME add RR header for < 300
-				Message.setEventAddresses((Message.request.event.dstAddress[0], Message.request.event.dstAddress[1], self.transport), Message.request.getReplyAddress())
+				Message.setEventAddresses((Message.request.event.dstAddress[0], Message.request.event.dstAddress[1], _NetworkEventHandler.transp), Message.request.getReplyAddress())
 			Message.createEvent()
 		_NetworkEventHandler.writeEvent(Message.event)
 		if Config.resources['XMLEH'].has_key(self.name):
