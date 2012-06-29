@@ -605,7 +605,7 @@ class TestCase:
 		self.addMessage(rep, dia, trans)
 		return rep
 
-	def createChallenge(self, mes=None, realm=None, qop=False, proxy=False):
+	def createChallenge(self, mes=None, realm=None, qop=False, algorithm="MD5", stale=None, proxy=False):
 		"""Creates and returns a challenge reply for the latest request. If
 		'mes' is given the reply is created for that message. If 'qop' is
 		True, the Authorization header will include qop=auth. If 'proxy' is
@@ -618,7 +618,10 @@ class TestCase:
 			auth = Helper.createClassInstance("Proxyauthenticate")
 			if realm is not None:
 				auth.realm = realm
+			if algorithm is not None:
+				auth.algorithm = algorithm
 			auth.qop = qop
+			auth.stale = stale
 			repl.setParsedHeaderValue("Proxy-Authenticate", auth)
 			repl.setHeaderValue("Proxy-Authenticate", auth.create())
 		else:
@@ -628,13 +631,16 @@ class TestCase:
 			auth = Helper.createClassInstance("Wwwauthenticate")
 			if realm is not None:
 				auth.realm = realm
+			if algorithm is not None:
+				auth.algorithm = algorithm
 			auth.qop = qop
+			auth.stale = stale
 			repl.setParsedHeaderValue("WWWAuthenticate", auth)
 			repl.setHeaderValue("WWW-Authenticate", auth.create())
 		repl.createEvent()
 		return repl
 
-	def checkAuthResponse(self, mes=None, username=None, password=None, realm=None):
+	def checkAuthResponse(self, mes=None, username=None, password=None, realm=None, proxy=False):
 		"""Returns True when the response in the Autheorization header of the
 		latest request is valid, otherwise False. NOTE: just the response value
 		will be checked, nothing else. If 'mes' is given the Authorization
@@ -653,10 +659,16 @@ class TestCase:
 			password = Config.TEST_USER_PASSWORD
 		if realm is None:
 			realm = Config.AUTH_REALM
-		if not mes.hasParsedHeaderField("Authorization"):
-			Log.logDebug("TestCase.checkAuthResponse(): Authorization header missing", 2)
-			return False
-		ah = mes.getParsedHeaderValue("Authorization")
+		if proxy:
+			if not mes.hasParsedHeaderField("Proxy-Authorization"):
+				Log.logDebug("TestCase.checkAuthResponse(): Proxy-Authorization header missing", 2)
+				return False
+			ah = mes.getParsedHeaderValue("Proxy-Authorization")
+		else:
+			if not mes.hasParsedHeaderField("Authorization"):
+				Log.logDebug("TestCase.checkAuthResponse(): Authorization header missing", 2)
+				return False
+			ah = mes.getParsedHeaderValue("Authorization")
 		cr = ah.response
 		a1 = DA.HA1(username, realm, password)
 		a2 = DA.HA2(mes.method, ah.uri)
