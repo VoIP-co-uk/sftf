@@ -79,6 +79,7 @@ class SFTF:
 		self.test = []
 		self.directories = []
 		self.tcdirs = str(Config.TEST_CASE_PATH).split(";")
+		self.totalSuccess = True
 		for dirs in str(Config.PARSER_PATH).split(';'):
 			sys.path.append(dirs)
 		# FIXME: currently this just prevents compile time during run time
@@ -205,6 +206,7 @@ class SFTF:
 			except KeyboardInterrupt:
 				Log.logDebug("test run interrupted by user through keyboard => exiting", 1)
 				Log.logTest("test run interrupted by user => exiting")
+				self.totalSuccess = False
 				if self.debug:
 					return
 				else:
@@ -247,6 +249,8 @@ class SFTF:
 		Config.LOG_TESTS_STD_OUT = False
 		for i in self.test:
 			res = i.getOneResult()
+			if res != TestCase.TC_PASSED:
+				self.totalSuccess = False
 			if self.colorOutput:
 				col = resToCol(res)
 			else:
@@ -391,3 +395,6 @@ def main():
 if __name__ == "__main__":
 	#FIXME SC is just for debuging
 	SC = main()
+	if not SC.totalSuccess:
+		sys.exit(1)
+	sys.exit(0)
