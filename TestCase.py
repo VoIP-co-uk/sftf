@@ -852,13 +852,13 @@ class TestCase:
 		body[2] = body[2].replace("Dummy on hold", "Media dummy")
 		body[3] = body[3].replace("0.0.0.0", str(ip))
 		body[4] = body[4].replace("m=audio 65534", "m=audio " + str(port))
-		if checksend and (mes is not None) and (not mes.isRequest) and (not mes.request is None) and (not mes.request.parsedBody is None) and (not mes.request.parsedBody.state is None):
-			rstate = mes.request.parsedBody.state
-			if rstate == 'sendrecv':
+		if checksend and (mes is not None) and (not mes.isRequest) and (not mes.request is None) and (not mes.request.parsedBody is None) and (len(mes.request.parsedBody.media) == 0):
+			attrs = mes.request.parsedBody.media[0].a + mes.request.parsedBody.attributes
+			if 'sendrecv' in attrs:
 				body[6] = body[6].replace("recvonly", "sendrecv")
-			elif rstate == 'recvonly':
+			elif 'recvonly' in attrs:
 				body[6] = body[6].replace("recvonly", "sendonly")
-			elif rstate == 'inactive':
+			elif 'inactive' in attrs:
 				body[6] = body[6].replace("recvonly", "inactive")
 		else:
 			body[6] = body[6].replace("recvonly", "sendrecv")

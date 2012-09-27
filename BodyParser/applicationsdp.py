@@ -20,12 +20,35 @@
 #
 # $Id$
 #
-class applicationsdp:
 
-	audio_state = ['sendrecv',
-					'sendonly',
-					'recvonly',
-					'inactive']
+class _MediaDescription:
+	def __init__(self, mLine):
+		self.m = mLine
+		self.i = None
+		self.c = None
+		self.b = None
+		self.k = None
+		self.a = []
+
+	def generate(self):
+		desc = [ 'm='+' '.join(self.m) ]
+		if self.i:
+			desc.append('i='+self.i)
+		if self.c:
+			desc.append('c='+' '.join(self.c))
+		if self.b:
+			desc.append('b='+':'.join(self.b))
+		if self.k:
+			desc.append('k='+self.k)
+		for attr in self.a:
+			desc.append('a='+attr)
+		return desc
+
+	def __str__(self):
+		return '[' + ','.join(self.generate()) + ']'
+
+
+class applicationsdp:
 
 	def __init__(self):
 		self.version = None
@@ -33,19 +56,14 @@ class applicationsdp:
 		self.sessionname = None
 		self.information = None
 		self.uri = None
-		self.emails = None
-		self.phones = None
+		self.emails = []
+		self.phones = []
 		self.connection = None
 		self.bandwidth = None
 		self.time = None
 		self.key = None
-		self.attributes = None
-		self.addrtype = None
-		self.ip = None
-		self.port = None
-		self.fmts = None
-		self.rtpmap = None
-		self.state = None
+		self.attributes = []
+		self.media = []
 
 
 	def generate(self):
@@ -57,10 +75,8 @@ class applicationsdp:
 			sdp.append('i='+self.information)
 		if self.uri is not None:
 			sdp.append('u='+self.uri)
-		if self.emails is not None:
-			sdp.extend( ['e='+e for e in self.emails] )
-		if self.phones is not None:
-			sdp.extend( ['p='+p for p in self.phones] )
+		sdp.extend( ['e='+e for e in self.emails] )
+		sdp.extend( ['p='+p for p in self.phones] )
 		if self.connection is not None:
 			sdp.append('c='+' '.join(self.connection))
 		if self.bandwidth is not None:
@@ -69,10 +85,9 @@ class applicationsdp:
 			sdp.append('t='+self.time)
 		if self.key is not None:
 			sdp.append('k='+self.key)
-		if self.media is not None:
-			sdp.append('m='+' '.join(self.media))
-		if self.attributes is not None:
-			sdp.extend( ['a='+a for a in self.attributes] )
+		sdp.extend( ['a='+a for a in self.attributes] )
+		for m in self.media:
+			sdp.extend(m.generate())
 		return '\r\n'.join(sdp)+'\r\n'
 		
 
@@ -88,62 +103,54 @@ class applicationsdp:
 				+ 'bandwidth:\'' + str(self.bandwidth) + '\', ' \
 				+ 'time:\'' + str(self.time) + '\', ' \
 				+ 'key:\'' + str(self.key) + '\', ' \
-				+ 'media:\'' + str(self.media) + '\', ' \
 				+ 'attributes:\'' + str(self.attributes) + '\', ' \
-				+ 'addrtype:\'' + str(self.addrtype) + '\', ' \
-				+ 'ip:\'' + str(self.ip) + '\', ' \
-				+ 'port:\'' + str(self.port) + '\', ' \
-				+ 'fmts:\'' + str(self.fmts) + '\', ' \
-				+ 'rtpmap:\'' + str(self.rtpmap) + '\', ' \
-				+ 'state:\'' + str(self.state) + '\']'
+				+ 'media:\'' + str(self.media) + '\']'
 
 	def parse(self, body):
+		mediaDescription = None
 		for line in body:
 			c = line[0].lower()
-			if c == 'v':
-				self.version = int(line[2:].strip())
-			elif c == 'o':
-				self.origin = line[2:].strip().split()
-			elif c == 's':
-				self.sessionname = line[2:].strip()
-			elif c == 'i':
-				self.information = line[2:].strip()
-			elif c == 'u':
-				self.uri = line[2:].strip()
-			elif c == 'e':
-				if self.emails is None:
-					self.emails = []
-				self.emails.append(line[2:].strip())
-			elif c == 'p':
-				if self.phones is None:
-					self.phones = []
-				self.phones.append(line[2:].strip())
-			elif c == 'c':
-				self.connection = line[2:].strip().split()
-			elif c == 'b':
-				self.bandwidth = line[2:].strip().split(':')
-			elif c == 't':
-				self.time = line[2:].strip()
-			elif c == 'k':
-				self.key = line[2:].strip()
-			elif c == 'a':
-				if self.attributes is None:
-					self.attributes = []
-				self.attributes.append(line[2:].strip())
-			elif c == 'm':
-				self.media = line[2:].strip().split()
-		if not self.connection is None:
-			self.addrtype = self.connection[1]
-			self.ip = self.connection[2]
-		if not self.media is None:
-			self.port = self.media[1]
-			self.fmts = self.media[3:]
-		if not self.attributes is None:
-			for at in self.attributes:
-				if at.lower().startswith("rtpmap:"):
-					if self.rtpmap is None:
-						self.rtpmap = {}
-					map = at[7:].split()
-					self.rtpmap[map[0]] = map[1]
-				elif at.lower() in applicationsdp.audio_state:
-					self.state = at.lower()
+			if not mediaDescription:
+				if c == 'v':
+					self.version = int(line[2:].strip())
+				elif c == 'o':
+					self.origin = line[2:].strip().split()
+				elif c == 's':
+					self.sessionname = line[2:].strip()
+				elif c == 'i':
+					self.information = line[2:].strip()
+				elif c == 'u':
+					self.uri = line[2:].strip()
+				elif c == 'e':
+					self.emails.append(line[2:].strip())
+				elif c == 'p':
+					self.phones.append(line[2:].strip())
+				elif c == 'c':
+					self.connection = line[2:].strip().split()
+				elif c == 'b':
+					self.bandwidth = line[2:].strip().split(':')
+				elif c == 't':
+					self.time = line[2:].strip()
+				elif c == 'k':
+					self.key = line[2:].strip()
+				elif c == 'a':
+					self.attributes.append(line[2:].strip())
+				elif c == 'm':
+					mediaDescription = _MediaDescription(line[2:].strip().split())
+			else:
+				if c == 'i':
+					mediaDescription.i = line[2:].strip()
+				elif c == 'c':
+					mediaDescription.c = line[2:].strip().split()
+				elif c == 'b':
+					mediaDescription.b = line[2:].strip().split(':')
+				elif c == 'k':
+					mediaDescription.k = line[2:].strip()
+				elif c == 'a':
+					mediaDescription.a.append(line[2:].strip())
+				elif c == 'm':
+					self.media.append(mediaDescription)
+					mediaDescription = _MediaDescription(line[2:].strip().split())
+
+		if mediaDescription:
+			self.media.append(mediaDescription)
