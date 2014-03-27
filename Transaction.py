@@ -303,12 +303,15 @@ class Transaction:
 						reply.setParsedHeaderValue("Contact", co)
 						reply.setHeaderValue("Contact", co.create())
 		else:
-			con = Helper.createClassInstance("Contact")
-			con.uri.protocol = "sip"
-			con.uri.username = Config.SC_USER_NAME
-			con.uri.host = Config.LOCAL_IP
-			con.uri.port = Config.LOCAL_PORT
-			con.uri.params = ['transport=UDP']
+			if (self.dialog is not None):
+				con = self.dialog.getLocalContact()
+			else:
+				con = Helper.createClassInstance("Contact")
+				con.uri.protocol = "sip"
+				con.uri.username = Config.SC_USER_NAME
+				con.uri.host = Config.LOCAL_IP
+				con.uri.port = Config.LOCAL_PORT
+				con.uri.params = ['transport=UDP']
 			reply.setParsedHeaderValue("Contact", con)
 			reply.setHeaderValue("Contact", con.create())
 			reply.body = []
