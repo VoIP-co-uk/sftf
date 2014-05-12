@@ -76,6 +76,7 @@ class SFTF:
 		self.colorOutput = True
 		self.verboseSummary = True
 		self.debug = False
+		self.numIterations = 1
 		self.test = []
 		self.directories = []
 		self.tcdirs = str(Config.TEST_CASE_PATH).split(";")
@@ -147,7 +148,7 @@ class SFTF:
 			return
 		Log.logTest("configuring tests ...")
 		final_tests = []
-		for i in self.test:
+		for i in self.test * self.numIterations:
 			i.config()
 			if (i.name is None) or (i.description is None) or (i.transport is None) or (i.isClient is None):
 				Log.logDebug("SFTF.run(): mandatory configuration (name, description, transport and isClient) is incomplete, ignoring " + str(i), 1)
@@ -283,7 +284,7 @@ class SFTF:
 		"""Print the version first and the help screen.
 		"""
 		self.version()
-		print "\nSFTF.py [-acCdhiIrRsSV] [-D directory] [-t testcasename] [testcasename]\n" \
+		print "\nSFTF.py [-acCdhiIrRsSV] [-n num] [-D directory] [-t testcasename] [testcasename]\n" \
 			"  -a                run all tests\n" \
 			"  -c                run UAC tests only\n" \
 			"  -C                dont use colors on output\n" \
@@ -292,6 +293,7 @@ class SFTF:
 			"  -h                print this help screen\n" \
 			"  -i                run non-interactive tests only\n" \
 			"  -I                run interactive tests only\n" \
+      "  -n num            run tests 'num' times\n" \
 			"  -r                run tests without REGISTER only\n" \
 			"  -R                run tests with REGISTER only\n" \
 			"  -s                run UAS tests only\n" \
@@ -309,7 +311,7 @@ def main():
 	Log.init()
 	sc=SFTF()
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "acCdD:hiIrRsSt:u:V", ["all", "client", "debug", "directory", "help", "interactive", "no-color", "non-interactive", "no-register", "no-summary", "register", "server", "testcase=", "test-suite=", "version"])
+		opts, args = getopt.getopt(sys.argv[1:], "acCdD:hiIn:rRsSt:u:V", ["all", "client", "debug", "directory", "help", "interactive", "no-color", "non-interactive", "no-register", "no-summary", "register", "server", "testcase=", "test-suite=", "version"])
 	except getopt.GetoptError, arg:
 		print arg
 		sc.usage()
@@ -340,6 +342,8 @@ def main():
 			sc.nonInteractOnly = True
 		if o in ("-I", "--interactive"):
 			sc.interactOnly = True
+		if o in ("-n"):
+			sc.numIterations = int(a)
 		if o in ("-r", "--no-register"):
 			sc.nonRegister = True
 		if o in ("-R", "--register"):
